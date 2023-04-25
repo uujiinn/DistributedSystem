@@ -1,9 +1,131 @@
 <html>
 <head>
-
+    <title>Yujin Server</title>
 </head>
-<body>
-<h2>Hello world</h2>
-</body>
+<style>
+    *{
+        margin:0;
+        padding:0;
+    }
 
+    body{
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    li{
+        list-style: none;
+    }
+    .content-wrapper{
+        width: 40%;
+        height: 60%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid dimgray;
+    }
+
+    #service-wrapper{
+        position: relative;
+        flex: 10;
+        height: 85%;
+        width: 100%;
+        //background: blue;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-top: 1px solid dimgray;
+    }
+
+    #system-message-wrapper{
+        flex: 1;
+        height: 10%;
+        width: 100%;
+        //background: aqua;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-top: 1px solid dimgray;
+    }
+
+    #file-service-wrapper{
+        flex: 1;
+        height: 100%;
+        //background: olivedrab;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        border-right: 1px solid dimgray;
+    }
+
+    #client-list-wrapper{
+        flex: 1;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    #file-form-wrapper{
+        background: lightgray;
+        margin-bottom: 2rem;
+    }
+
+    li{
+        margin-top: 0.5rem;
+    }
+
+    textarea{
+        flex: 1;
+        resize: none;
+        overflow-y: scroll;
+        border: none;
+    }
+
+    .title-head{
+        position: absolute;
+        top: 3%;
+    }
+
+</style>
+<body>
+<div class="content-wrapper">
+    <h1>Yujin Server</h1>
+    <div id="service-wrapper">
+        <div id="file-service-wrapper">
+            <h1 class="title-head">File-Service</h1>
+            <h3>File Upload</h3>
+            <form id="file-form-wrapper">
+                <input type="file" name="input_file">
+                <input type="submit" name="Upload">
+            </form>
+            <ul id="file-list-wrapper">
+                <li>file1</li>
+                <li>file2</li>
+                <li>file3</li>
+            </ul>
+        </div>
+        <div id="client-list-wrapper">
+            <h1 class="title-head">Client-List</h1>
+            <ul id="client-list">
+                <li>client1</li>
+                <li>client2</li>
+                <li>client3</li>
+            </ul>
+        </div>
+    </div>
+    <div id="system-message-wrapper">
+        <textarea>
+            <system>: client4 님이 퇴장하셨습니다.
+        </textarea>
+    </div>
+</div>
+</body>
 </html>
