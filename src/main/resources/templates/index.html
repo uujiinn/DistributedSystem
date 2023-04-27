@@ -2,6 +2,7 @@
 <head>
     <title>Yujin Server</title>
     <link rel="stylesheet" href="/css/index.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
     <script src="/js/index.js"></script>
 </head>
 <style>
@@ -14,11 +15,12 @@
         <div id="file-service-wrapper">
             <h1 class="title-head">File-Service</h1>
             <h3>File Upload</h3>
-            <form id="file-form-wrapper">
-                <input type="file" name="input_file">
+            <form id="file-form-wrapper" method="post" action="file" enctype="multipart/form-data">
+                <input id="input_file" type="file" name="input_file">
+                <input id="client_name_input" name="client_name" type="hidden" value="">
                 <input type="submit" name="Upload">
             </form>
-            <ul id="file-list-wrapper">
+            <ul id="file-list">
             </ul>
         </div>
         <div id="client-list-wrapper">
