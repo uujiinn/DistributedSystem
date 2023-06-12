@@ -1,4 +1,5 @@
 let websocket;
+
 function onConnect(evt) {
 
     evt.preventDefault();
@@ -28,8 +29,17 @@ function onConnect(evt) {
             let list = msg.split("$");
             let ul = document.getElementById("client-list");
             ul.innerHTML = '';
+
+            const name = document.getElementById("client_name").value;
+            let selectClient = document.getElementById("selected_client");
+            selectClient.innerHTML = '<option value="">Select a client</option>';
+
             for (let i = 1; i < list.length; i++) {
                 ul.innerHTML = ul.innerHTML + "<li>" + list[i] + "</li>";
+
+                if (list[i] != name && list[i].length != 0) {
+                    selectClient.innerHTML += '<option value="' + list[i] + '">' + list[i] + '</option>';
+                }
             }
             return;
         }
@@ -39,6 +49,10 @@ function onConnect(evt) {
             let list = msg.split("$");
             let ul = document.getElementById("file-list");
             ul.innerHTML = '';
+
+            let selectFile = document.getElementById("selected_file");
+            selectFile.innerHTML = '<option value="">Select a file</option>';
+
             for (let i = 1; i < list.length && list[i].length != 0; i++) {
                 ul.innerHTML = ul.innerHTML +
                     "<div id='file_item'>" +
@@ -47,10 +61,17 @@ function onConnect(evt) {
                     "<button type='button' onclick='onDelete(event)' data-filename='" +
                     list[i] +
                     "'" +
-                    "데이터 삭제"+
-                    "</button>"+
+                    ">" +
+                    "Delete</button>" +
+                    "<option value='" +
+                    list[i] +
+                    "'" + ">" + "</option>" +
                     "</div>";
+
+                selectFile.innerHTML += '<option value="' + list[i] + '">' + list[i] + '</option>';
+
             }
+
             return;
         }
 
@@ -93,6 +114,20 @@ function onDelete(evt) {
     });
 }
 
+function onShare(evt) {
+    const sender = document.getElementById("client_name").value;
+    const selectedFile = document.getElementById("selected_file").value;
+    const selectedClient = document.getElementById("selected_client").value;
+
+    if (!selectedFile || !selectedClient) {
+        alert("Please select a fil./e and a client");
+        return;
+    }
+
+    const message = `SHARE_FILE:${sender}:${selectedFile}:${selectedClient}`;
+    websocket.send(message);
+}
+
 //연결 안됐을 때
 function onDisconnect() {
     if (websocket.readyState == WebSocket.CLOSED) {
@@ -110,6 +145,7 @@ function onDisconnect() {
 window.onload = () => {
     document.getElementById("client_login_button").addEventListener("click", onConnect, false);
     document.getElementById("client_logout_button").addEventListener("click", onDisconnect, false);
+    document.getElementById("share_button").addEventListener("click", onShare, false);
 
     const form = document.getElementById('file-form-wrapper');
     const fileInput = document.getElementById('input_file');

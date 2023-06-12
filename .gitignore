@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+src/main/java/com/konkukcs/YujinServer/S3Config.java
+src/main/resources/application.properties

@@ -1,17 +1,17 @@
 package com.konkukcs.YujinServer.service;
 
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.konkukcs.YujinServer.handler.SocketHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,71 +20,70 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FileService {
 
     private final SocketHandler socketHandler;
-    private static Map<String, String> pathMap = new ConcurrentHashMap<>();
-    private static Map<String, String> originalFilename = new ConcurrentHashMap<>();
-    private static Map<String, String> fileUUIDMap = new ConcurrentHashMap<>();
-    private static final String FILE_DIR = "/Users/yujin.iris/downloads";
 
-    public String uploadFile(String host, MultipartFile file, String remoteAddr) throws IOException {
-        if (!file.isEmpty()) {
+    private final Map<String, String> fileUUIDMap = new HashMap<>();
+    private final AmazonS3 amazonS3; // AmazonS3 클라이언트
 
-            String filename = file.getOriginalFilename();
-            String fileUUID = UUID.randomUUID().toString() + "_" + filename;
+    @Value("${cloud.aws.s3.bucket}") // application.properties에서 설정한 S3 버킷 이름
+    private String s3BucketName;
 
-            originalFilename.put(fileUUID, filename);
-            fileUUIDMap.put(filename, fileUUID);
+    public List<String> uploadFiles(String host, List<MultipartFile> files, String remoteAddr) throws IOException {
+        List<String> s3Keys = new ArrayList<>();
 
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                String filename = file.getOriginalFilename();
+                String fileUUID = filename + String.valueOf(UUID.nameUUIDFromBytes(filename.getBytes()));
+                fileUUIDMap.put(filename, fileUUID);
 
-            String fullHost = remoteAddr + "_" + host;
-            String dir = FILE_DIR + File.separator + fullHost;
+                String fullHost = remoteAddr + "_" + host;
+                String s3Key = fullHost + "/" + fileUUID;
 
-            if (!pathMap.containsKey(dir)) {
-                pathMap.put(dir, fullHost);
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentLength(file.getSize());
+
+                // S3에 파일 업로드
+                amazonS3.putObject(new PutObjectRequest(s3BucketName, s3Key, file.getInputStream(), metadata));
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        socketHandler.emitFileList(fileUUIDMap, remoteAddr, host, filename, true);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+                s3Keys.add(s3Key);
             }
+        }
 
-            File folder = new File(dir);
-            if (!folder.exists()) {
-                folder.mkdir();
-            }
+        return s3Keys;
+    }
 
-            String fullPath = dir + File.separator + fileUUID;
-            Path absPath = Paths.get(fullPath).toAbsolutePath();
-            file.transferTo(absPath.toFile());
+
+    public boolean deleteFiles(String remoteAddr, String host, String fileName) throws IOException {
+        String fullHost = remoteAddr + "_" + host;
+        String fileUUID = fileUUIDMap.get(fileName);
+        if (fileUUID != null) {
+            String s3Key = fullHost + "/" + fileUUID;
+
+            // S3에서 파일 삭제
+            amazonS3.deleteObject(s3BucketName, s3Key);
 
             CompletableFuture.runAsync(() -> {
                 try {
-                    socketHandler.emitFileList(originalFilename, remoteAddr, host, filename, true);
+                    socketHandler.emitFileList(fileUUIDMap, remoteAddr, host, fileName, false);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
 
-            return fullPath;
-        } else return null;
-    }
+            fileUUIDMap.remove(fileName);
 
-    public boolean deleteFile(String remoteAddr, String host, String fileName) throws IOException {
-        String fullHost = remoteAddr + "_" + host;
-        String dir = FILE_DIR + File.separator + fullHost;
-        String path = dir + File.separator + fileUUIDMap.get(fileName);
-        System.out.println(path);
-
-        Path absPath = Paths.get(path).toAbsolutePath();
-        File target = absPath.toFile();
-
-        System.out.println(absPath);
-        if (target.exists()) {
-            if (target.delete()) {
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        socketHandler.emitFileList(originalFilename, remoteAddr, host, fileName, false);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                return true;
-            }
+            return true;
         }
+
         return false;
     }
+
 }
