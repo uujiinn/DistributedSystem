@@ -37,13 +37,14 @@ public class FileService {
                 fileUUIDMap.put(filename, fileUUID);
 
                 String fullHost = remoteAddr + "_" + host;
-                String s3Key = fullHost + "/" + fileUUID;
+                //client
+                String s3KeyForClient = "client" + "/" + fullHost + "/" + fileUUID;
 
                 ObjectMetadata metadata = new ObjectMetadata();
                 metadata.setContentLength(file.getSize());
 
-                // S3에 파일 업로드
-                amazonS3.putObject(new PutObjectRequest(s3BucketName, s3Key, file.getInputStream(), metadata));
+                // S3 client에 파일 업로드
+                amazonS3.putObject(new PutObjectRequest(s3BucketName, s3KeyForClient, file.getInputStream(), metadata));
 
                 CompletableFuture.runAsync(() -> {
                     try {
@@ -51,39 +52,52 @@ public class FileService {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                });
 
-                s3Keys.add(s3Key);
+                    s3Keys.add(s3KeyForClient);
+                });
+                //server
+                String s3KeyForServer = "server" + "/" + fullHost + "/" + fileUUID;
+
+                ObjectMetadata metadataForServer = new ObjectMetadata();
+                metadataForServer.setContentLength(file.getSize());
+
+                // S3 server에 파일 업로드
+                amazonS3.putObject(new PutObjectRequest(s3BucketName, s3KeyForServer, file.getInputStream(), metadataForServer));
+
+                CompletableFuture.runAsync(() -> {
+                    s3Keys.add(s3KeyForClient);
+                });
             }
         }
-
         return s3Keys;
     }
 
+        public boolean deleteFiles (String remoteAddr, String host, String fileName) throws IOException {
+            String fullHost = remoteAddr + "_" + host;
+            String fileUUID = fileUUIDMap.get(fileName);
+            if (fileUUID != null) {
+                String s3KeyForClient = "client" + "/" + fullHost + "/" + fileUUID;
 
-    public boolean deleteFiles(String remoteAddr, String host, String fileName) throws IOException {
-        String fullHost = remoteAddr + "_" + host;
-        String fileUUID = fileUUIDMap.get(fileName);
-        if (fileUUID != null) {
-            String s3Key = fullHost + "/" + fileUUID;
+                // S3에서 파일 삭제
+                amazonS3.deleteObject(s3BucketName, s3KeyForClient);
 
-            // S3에서 파일 삭제
-            amazonS3.deleteObject(s3BucketName, s3Key);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        socketHandler.emitFileList(fileUUIDMap, remoteAddr, host, fileName, false);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
 
-            CompletableFuture.runAsync(() -> {
-                try {
-                    socketHandler.emitFileList(fileUUIDMap, remoteAddr, host, fileName, false);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+                String s3KeyForServer = "server" + "/" + fullHost + "/" + fileUUID;
+                amazonS3.deleteObject(s3BucketName, s3KeyForServer);
 
-            fileUUIDMap.remove(fileName);
+                fileUUIDMap.remove(fileName);
 
-            return true;
+                return true;
+            }
+
+            return false;
         }
 
-        return false;
     }
-
-}

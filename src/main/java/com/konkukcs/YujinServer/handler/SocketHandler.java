@@ -134,7 +134,7 @@ public class SocketHandler extends TextWebSocketHandler {
         }
     }
 
-    public void emitFileList(Map<String, String> originalName,  //client+host
+    public void emitFileList(Map<String, String> originalName,
                              String remoteAddr,
                              String username,
                              String _filename,
@@ -142,7 +142,7 @@ public class SocketHandler extends TextWebSocketHandler {
         WebSocketSession sess = names.get("/" + "[" + remoteAddr + "]" + "_" + username);
         String fullHost = remoteAddr + "_" + username;
 
-        String directoryPath = fullHost;
+        String directoryPath = "client" + "/" +fullHost;
 
         ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
@@ -156,7 +156,7 @@ public class SocketHandler extends TextWebSocketHandler {
         String val, fn = null;
         List<String> fileList = new ArrayList<>();
         for (S3ObjectSummary objectSummary : objectSummaries) {
-            val = objectSummary.getKey().split("/")[1];
+            val = objectSummary.getKey().split("/")[2];
             for (Map.Entry<String, String> entry : originalName.entrySet()) {
                 if (entry.getValue().equals(val)) {
                     fn = entry.getKey();
