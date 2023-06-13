@@ -1,6 +1,7 @@
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 body {
@@ -9,99 +10,142 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: #f1f1f1;
 }
-
-li {
-    list-style: none;
-}
-
 .content-wrapper {
-    width: 40%;
-    height: 60%;
+    width: 80%;
+    height: 90%;
+    max-height: calc(100vh - 40px);
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
     border: 1px solid dimgray;
-}
-
-#service-wrapper {
-    position: relative;
-    flex: 9;
-    height: 85%;
-    width: 100%;
-//background: blue;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    border-top: 1px solid dimgray;
-}
-
-#system-message-wrapper {
-    flex: 1;
-    height: 10%;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-top: 1px solid dimgray;
-    border-bottom: 1px solid dimgray;
-    margin-bottom: 2%;
-}
-
-#file-service-wrapper {
-    flex: 1;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    border-right: 1px solid dimgray;
-}
-#file-wrapper{
-    max-height: calc(100% - 100px); /* Adjust the value as needed */
-    overflow: auto;
-    flex-direction: column;
-}
-
-#file-list {
-    max-height: 200px;
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
 }
 
-#client-list-wrapper {
-    flex: 1;
-    height: 100%;
+h1 {
+    margin-bottom: 20px;
+    font-size: 26px;
+    text-align: center;
+}
+
+.buttons-wrapper {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
-#file-form-wrapper {
-    background: #dddddd;
-    margin-bottom: 2rem;
-    display: none;
+.buttons-wrapper label {
+    margin-right: 10px;
 }
 
-li {
-    margin-top: 0.5rem;
+.buttons-wrapper input[type="text"] {
+    padding: 5px;
 }
 
-textarea {
-    flex: 1;
-    width: 100%;
-    resize: none;
-    overflow-y: scroll;
+.buttons-wrapper button {
+    padding: 5px 10px;
+    background-color: #6cc7a3;
+    color: white;
     border: none;
+    cursor: pointer;
+}
+
+#service-wrapper {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 .title-head {
-    position: absolute;
-    top: 3%;
+    font-size: 20px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-#connect_wrapper {
+#file-service-wrapper {
+    width: 60%;
+    padding: 10px;
+    border: 1px solid lightgray;
+}
 
+#file-form-wrapper {
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    background-color: #f1f1f1;
+}
+
+#file-form-wrapper input[type="file"] {
+    margin-bottom: 10px;
+}
+
+#file-list {
+    list-style-type: none;
+    max-height: 300px;
+    overflow:auto;
+    flex-direction: column;
+}
+
+#file-list li {
+    margin-bottom: 5px;
+}
+
+#client-list-wrapper {
+    width: 60%;
+    padding: 10px;
+    border: 1px solid lightgray;
+}
+
+#client-list {
+    list-style-type: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+#client-list li {
+    margin-bottom: 5px;
+}
+
+#system-message-wrapper {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid lightgray;
+    margin-bottom: 20px;
+}
+
+#system-message-wrapper textarea {
+    width: 100%;
+    height: 100%;
+    resize: none;
+    border: none;
+    background-color: #f1f1f1;
+}
+
+#share-file-wrapper {
+    padding: 10px;
+    border: 1px solid lightgray;
+}
+
+.share-file-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.share-file-form button {
+    padding: 5px 10px;
+    background-color: #6cc7a3;
+    color: white;
+    border: none;
+    cursor: pointer;
 }
