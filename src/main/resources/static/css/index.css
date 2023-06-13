@@ -59,9 +59,15 @@ li {
     flex-direction: column;
     border-right: 1px solid dimgray;
 }
+#file-wrapper{
+    max-height: calc(100% - 100px); /* Adjust the value as needed */
+    overflow: auto;
+    flex-direction: column;
+}
 
 #file-list {
-    display: none;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 #client-list-wrapper {

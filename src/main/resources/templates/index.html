@@ -10,10 +10,12 @@
 <body>
 <div class="content-wrapper">
     <h1>Yujin Server</h1>
+    <button id="sync_button">동기화</button>
     <div id="service-wrapper">
         <div id="file-service-wrapper">
             <h1 class="title-head">File-Service</h1>
             <h3>File Upload</h3>
+            <div id="file-wrapper">
             <form id="file-form-wrapper" method="post" action="file" enctype="multipart/form-data">
                 <input id="input_file" type="file" name="input_file">
                 <input id="client_name_input" name="client_name" type="hidden" value="">
@@ -21,6 +23,7 @@
             </form>
             <ul id="file-list">
             </ul>
+            </div>
         </div>
         <div id="client-list-wrapper">
             <h1 class="title-head">Client-List</h1>
