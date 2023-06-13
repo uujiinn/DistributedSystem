@@ -30,7 +30,7 @@ li {
     flex: 9;
     height: 85%;
     width: 100%;
-    //background: blue;
+//background: blue;
     display: flex;
     flex-direction: row;
     justify-content: center;

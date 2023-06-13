@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -34,11 +33,12 @@ public class FileService {
             if (!file.isEmpty()) {
                 String filename = file.getOriginalFilename();
                 String fileUUID = filename + String.valueOf(UUID.nameUUIDFromBytes(filename.getBytes()));
-                fileUUIDMap.put(filename, fileUUID);
+                fileUUIDMap.put(filename, filename);
 
-                String fullHost = remoteAddr + "_" + host;
+                String fullHost = host;
+
                 //client
-                String s3KeyForClient = "client" + "/" + fullHost + "/" + fileUUID;
+                String s3KeyForClient = "client" + "/" + fullHost + "/" + filename;
 
                 ObjectMetadata metadata = new ObjectMetadata();
                 metadata.setContentLength(file.getSize());
@@ -46,17 +46,8 @@ public class FileService {
                 // S3 client에 파일 업로드
                 amazonS3.putObject(new PutObjectRequest(s3BucketName, s3KeyForClient, file.getInputStream(), metadata));
 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        socketHandler.emitFileList(fileUUIDMap, remoteAddr, host, filename, true);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    s3Keys.add(s3KeyForClient);
-                });
                 //server
-                String s3KeyForServer = "server" + "/" + fullHost + "/" + fileUUID;
+                String s3KeyForServer = "server" + "/" + fullHost + "/" + filename;
 
                 ObjectMetadata metadataForServer = new ObjectMetadata();
                 metadataForServer.setContentLength(file.getSize());
@@ -65,7 +56,14 @@ public class FileService {
                 amazonS3.putObject(new PutObjectRequest(s3BucketName, s3KeyForServer, file.getInputStream(), metadataForServer));
 
                 CompletableFuture.runAsync(() -> {
+                    try {
+                        socketHandler.emitFileList(remoteAddr, host, filename, true);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
                     s3Keys.add(s3KeyForClient);
+                    s3Keys.add(s3KeyForServer);
                 });
             }
         }
@@ -73,7 +71,7 @@ public class FileService {
     }
 
         public boolean deleteFiles (String remoteAddr, String host, String fileName) throws IOException {
-            String fullHost = remoteAddr + "_" + host;
+            String fullHost = host;
             String fileUUID = fileUUIDMap.get(fileName);
             if (fileUUID != null) {
                 String s3KeyForClient = "client" + "/" + fullHost + "/" + fileUUID;
@@ -83,7 +81,7 @@ public class FileService {
 
                 CompletableFuture.runAsync(() -> {
                     try {
-                        socketHandler.emitFileList(fileUUIDMap, remoteAddr, host, fileName, false);
+                        socketHandler.emitFileList(remoteAddr, host, fileName, false);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

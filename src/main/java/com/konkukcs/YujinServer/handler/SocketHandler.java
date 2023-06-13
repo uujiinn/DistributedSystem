@@ -11,14 +11,11 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 @Log4j2
@@ -43,14 +40,14 @@ public class SocketHandler extends TextWebSocketHandler {
             }
         }
         String username = session.getUri().getQuery().split("=")[1];
-        String code = remoteAddress + "_" + username;
+        String code = username;
 
         sockets.put(session, code);
         names.put(code, session);
 
         String list = "CLIENT_LIST$";
         for (String value : sockets.values()) {
-            list += value.split("_")[1] + "$";
+            list += value + "$";
         }
         for (WebSocketSession sess : sockets.keySet()) {
             sess.sendMessage(new TextMessage(list));
@@ -59,13 +56,8 @@ public class SocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        // const message = `SHARE_FILE:${selectedFile}:${selectedClient}:${username}`;
-        // 저 형식에서 filename, sender, receiver
-        // 파싱을 해서
-        // 1. username/file 여기서 파일을 꺼내옵니다
-        // 2. 이거를 receiver/file 로 저장
-        // 새롭게 함수를 만듬
-        // 기존 uploadFile을
+        // const message = `SHARE_FILE:${sender}:${selectedFile}:${selectedClient}`
+        // 보내는사람 클라이언트에서 받는 사람 둘 다로
         String messageText = message.getPayload();
         if (messageText.startsWith("SHARE_FILE:")) {
             String[] parts = messageText.split(":");
@@ -73,9 +65,11 @@ public class SocketHandler extends TextWebSocketHandler {
                 String sender = parts[1];
                 String filename = parts[2];
                 String receiver = parts[3];
-                // Call a new function to handle file sharing
+
                 handleFileSharing(sender, filename, receiver);
             }
+        } else if (messageText.equals("REQ_EMIT")) {
+            emitFileList("", sockets.get(session), null, false);
         } else {
             for (WebSocketSession sess : sockets.keySet()) {
                 sess.sendMessage(message);
@@ -84,20 +78,22 @@ public class SocketHandler extends TextWebSocketHandler {
     }
 
     private void handleFileSharing(String sender, String filename, String receiver) {
-        String sourceFilePath = sender +"/"+filename;
-        String receiverFolder = receiver+ "/"+filename; // Change this to the receiver's folder path in the S3 bucket
-        String s3Key = receiverFolder;
+        String sourceFilePath = "client" + "/" + sender + "/" + filename;
+        String receiverFolder = "client" + "/" + receiver + "/" + filename;
+        String receiverFolder2 = "server" + "/" + receiver + "/" + filename;
 
         try {
-            File file = new File(sourceFilePath);
-            PutObjectRequest putObjectRequest = new PutObjectRequest(s3BucketName, s3Key, file);
-            amazonS3.putObject(putObjectRequest);
+            // s3에서 파일 복사
+            CopyObjectRequest copyObjectRequest = new CopyObjectRequest(s3BucketName, sourceFilePath, s3BucketName, receiverFolder);
+            amazonS3.copyObject(copyObjectRequest);
+            CopyObjectRequest copyObjectRequest2 = new CopyObjectRequest(s3BucketName, sourceFilePath, s3BucketName, receiverFolder2);
+            amazonS3.copyObject(copyObjectRequest2);
 
             // Send a success message to the sender
-            sendMessageToClient(sender, "File shared successfully with " + receiver);
+            sendMessageToClient(sender,  filename + " shared successfully with " + receiver);
 
             // Send a success message to the receiver
-            sendMessageToClient(receiver, "You received a file from " + sender);
+            sendMessageToClient(receiver, "You received "+ filename + " from " + sender);
         } catch (AmazonS3Exception e) {
             // Handle exception if file upload fails
             e.printStackTrace();
@@ -127,51 +123,73 @@ public class SocketHandler extends TextWebSocketHandler {
         sockets.remove(session);
         String list = "CLIENT_LIST$";
         for (String value : sockets.values()) {
-            list += value.split("_")[1] + "$";
+            list += value + "$";
         }
         for (WebSocketSession sess : sockets.keySet()) {
             sess.sendMessage(new TextMessage(list));
         }
     }
 
-    public void emitFileList(Map<String, String> originalName,
-                             String remoteAddr,
-                             String username,
-                             String _filename,
-                             boolean flag) throws IOException {
-        WebSocketSession sess = names.get("/" + "[" + remoteAddr + "]" + "_" + username);
-        String fullHost = remoteAddr + "_" + username;
+    public void emitFileList(
+            String remoteAddr,
+            String username,
+            String _filename,
+            boolean flag) throws IOException {
+        WebSocketSession sess = names.get(username);
+        String fullHost = username;
 
-        String directoryPath = "client" + "/" +fullHost;
+        String directoryPath_client = "client" + "/" + fullHost;
+        String directoryPath_server = "server" + "/" + fullHost;
 
+        // client 파일 리스트 emit
         ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
                 .withBucketName(s3BucketName)
-                .withPrefix(directoryPath);
+                .withPrefix(directoryPath_client);
 
 
         ObjectListing objectListing = amazonS3.listObjects(listObjectsRequest);
         List<S3ObjectSummary> objectSummaries = objectListing.getObjectSummaries();
 
         String data = "";
-        String val, fn = null;
+        String val;
         List<String> fileList = new ArrayList<>();
         for (S3ObjectSummary objectSummary : objectSummaries) {
             val = objectSummary.getKey().split("/")[2];
-            for (Map.Entry<String, String> entry : originalName.entrySet()) {
-                if (entry.getValue().equals(val)) {
-                    fn = entry.getKey();
-                    break;
-                }
-            }
-            if (fn != null) fileList.add(fn);
+            if (val != null) fileList.add(val);
         }
 
         for (String s : fileList) {
             data += s + "$";
         }
-        data = "FILE_LIST$" + data;
+        data = "CLIENT_FILE_LIST$" + data;
+
+        data += "SERVER_FILE_LIST$";
+
+        // server 파일 리스트 emit
+        ListObjectsRequest listObjectsRequest2 = new ListObjectsRequest()
+                .withBucketName(s3BucketName)
+                .withPrefix(directoryPath_server);
+
+
+        ObjectListing objectListing2 = amazonS3.listObjects(listObjectsRequest2);
+        List<S3ObjectSummary> objectSummaries2 = objectListing2.getObjectSummaries();
+
+        String val2;
+        List<String> fileList2 = new ArrayList<>();
+        for (S3ObjectSummary objectSummary : objectSummaries) {
+            val2 = objectSummary.getKey().split("/")[2];
+            if (val2 != null) fileList2.add(val2);
+        }
+
+        for (String s : fileList2) {
+            data += s + "$";
+        }
+
         sess.sendMessage(new TextMessage(data));
-        if (flag) sess.sendMessage(new TextMessage(_filename + " : 업로드 완료"));
-        else sess.sendMessage(new TextMessage(_filename + " : 삭제 완료"));
+
+        if (_filename != null) {
+            if (flag) sess.sendMessage(new TextMessage(_filename + " : 업로드 완료"));
+            else sess.sendMessage(new TextMessage(_filename + " : 삭제 완료"));
+        }
     }
 }

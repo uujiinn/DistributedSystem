@@ -24,6 +24,9 @@ function onConnect(evt) {
     function onMessage(evt) {
         let msg = evt.data;
 
+        if (msg.indexOf("You received") >= 0) {
+            websocket.send("REQ_EMIT");
+        }
         // check client list
         if (msg.indexOf("CLIENT_LIST") >= 0) {
             let list = msg.split("$");
@@ -44,8 +47,8 @@ function onConnect(evt) {
             return;
         }
 
-        // check file list
-        if (msg.indexOf("FILE_LIST") >= 0) {
+        // check file list - client
+        if (msg.indexOf("CLIENT_FILE_LIST") >= 0) {
             let list = msg.split("$");
             let ul = document.getElementById("file-list");
             ul.innerHTML = '';
@@ -53,23 +56,47 @@ function onConnect(evt) {
             let selectFile = document.getElementById("selected_file");
             selectFile.innerHTML = '<option value="">Select a file</option>';
 
+            let owner = "[CLIENT]";
             for (let i = 1; i < list.length && list[i].length != 0; i++) {
+                if (list[i] == "SERVER_FILE_LIST") {
+                    owner = "[SERVER]";
+                    continue;
+                }
                 ul.innerHTML = ul.innerHTML +
                     "<div id='file_item'>" +
-                    "<li>" + list[i] +
+                    "<li>" + owner + list[i] +
                     "</li>" +
                     "<button type='button' onclick='onDelete(event)' data-filename='" +
                     list[i] +
                     "'" +
                     ">" +
                     "Delete</button>" +
-                    "<option value='" +
-                    list[i] +
-                    "'" + ">" + "</option>" +
                     "</div>";
+                if (owner == "[CLIENT]")
+                    selectFile.innerHTML += '<option value="' + list[i] + '">'  + list[i] + '</option>';
 
-                selectFile.innerHTML += '<option value="' + list[i] + '">' + list[i] + '</option>';
+            }
 
+            return;
+        }
+
+        //check file list - server
+        if (msg.indexOf("SERVER_FILE_LIST") >= 0) {
+            let list = msg.split("$");
+            let ul = document.getElementById("file-list");
+            // ul.innerHTML = '';
+
+            for (let i = 1; i < list.length && list[i].length != 0; i++) {
+                ul.innerHTML = ul.innerHTML +
+                    "<div id='file_item'>" +
+                    "<li>" + "[SERVER]" + list[i] +
+                    "</li>" +
+                    "<button type='button' onclick='onDelete(event)' data-filename='" +
+                    list[i] +
+                    "'" +
+                    ">" +
+                    "Delete</button>" +
+                    "</div>";
             }
 
             return;
