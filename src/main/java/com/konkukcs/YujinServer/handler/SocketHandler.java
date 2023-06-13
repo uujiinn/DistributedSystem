@@ -70,6 +70,10 @@ public class SocketHandler extends TextWebSocketHandler {
             }
         } else if (messageText.equals("REQ_EMIT")) {
             emitFileList("", sockets.get(session), null, false);
+        } else if (messageText.startsWith("SYNC")) {
+            String[] ss = messageText.split(":");
+            String username = ss[1];
+            syncFile(session,username);
         } else {
             for (WebSocketSession sess : sockets.keySet()) {
                 sess.sendMessage(message);
@@ -90,10 +94,10 @@ public class SocketHandler extends TextWebSocketHandler {
             amazonS3.copyObject(copyObjectRequest2);
 
             // Send a success message to the sender
-            sendMessageToClient(sender,  filename + " shared successfully with " + receiver);
+            sendMessageToClient(sender, filename + " shared successfully with " + receiver);
 
             // Send a success message to the receiver
-            sendMessageToClient(receiver, "You received "+ filename + " from " + sender);
+            sendMessageToClient(receiver, "You received " + filename + " from " + sender);
         } catch (AmazonS3Exception e) {
             // Handle exception if file upload fails
             e.printStackTrace();
@@ -116,6 +120,44 @@ public class SocketHandler extends TextWebSocketHandler {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void syncFile(WebSocketSession session, String username) throws IOException {
+        String serverS3key = "server"+"/"+username;
+        String clientS3key = "client"+"/"+username;
+
+        // server 파일 리스트 삭제
+        ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
+                .withBucketName(s3BucketName)
+                .withPrefix(serverS3key);
+
+
+        ObjectListing objectListing = amazonS3.listObjects(listObjectsRequest);
+        List<S3ObjectSummary> objectSummaries = objectListing.getObjectSummaries();
+
+        for (S3ObjectSummary objectSummary : objectSummaries) {
+            String key = objectSummary.getKey();
+            amazonS3.deleteObject(s3BucketName, key);
+        }
+
+        //client 파일 리스트 복사
+        ListObjectsRequest listObjectsRequest2 = new ListObjectsRequest()
+                .withBucketName(s3BucketName)
+                .withPrefix(clientS3key);
+
+        ObjectListing objectListing2 = amazonS3.listObjects(listObjectsRequest2);
+        List<S3ObjectSummary> objectSummaries2 = objectListing2.getObjectSummaries();
+
+        for (S3ObjectSummary objectSummary2 : objectSummaries2) {
+            String clientKey = objectSummary2.getKey();
+            String serverKey = clientKey.replaceFirst("client", "server");
+
+            CopyObjectRequest copyObjectRequest = new CopyObjectRequest(s3BucketName, clientKey, s3BucketName, serverKey);
+            amazonS3.copyObject(copyObjectRequest);
+        }
+
+        emitFileList("", username, null, false);
+        session.sendMessage(new TextMessage("동기화 완료"));
     }
 
     @Override

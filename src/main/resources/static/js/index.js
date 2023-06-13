@@ -9,6 +9,7 @@ function onConnect(evt) {
         return;
     }
 
+    document.getElementById("client_login_button").disabled = true;
     document.getElementById("client_name").disabled = true;
     document.getElementById("file-form-wrapper").style.display = "block";
     document.getElementById("file-list").style.display = "block";
@@ -143,8 +144,9 @@ function onDelete(evt) {
 }
 
 function onSync(evt){
-
-
+    let msg = evt.data;
+    const name = document.getElementById("client_name").value;
+    websocket.send("SYNC:" + name);
 }
 
 function onShare(evt) {

@@ -12,6 +12,7 @@ body {
     align-items: center;
     background-color: #f1f1f1;
 }
+
 .content-wrapper {
     width: 80%;
     height: 90%;
@@ -36,6 +37,7 @@ h1 {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+    align-items: center; /* 추가: 버튼과 입력 필드를 수직 정렬 */
 }
 
 .buttons-wrapper label {
@@ -81,6 +83,7 @@ h1 {
     align-items: center;
     margin-bottom: 10px;
     background-color: #f1f1f1;
+    padding: 10px; /* 추가: 영역 내부 여백 추가 */
 }
 
 #file-form-wrapper input[type="file"] {
@@ -90,8 +93,9 @@ h1 {
 #file-list {
     list-style-type: none;
     max-height: 300px;
-    overflow:auto;
+    overflow: auto;
     flex-direction: column;
+    padding: 10px; /* 추가: 영역 내부 여백 추가 */
 }
 
 #file-list li {
@@ -110,6 +114,7 @@ h1 {
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    padding: 10px; /* 추가: 영역 내부 여백 추가 */
 }
 
 #client-list li {
@@ -129,17 +134,20 @@ h1 {
     resize: none;
     border: none;
     background-color: #f1f1f1;
+    padding: 5px; /* 추가: 영역 내부 여백 추가 */
 }
 
 #share-file-wrapper {
     padding: 10px;
     border: 1px solid lightgray;
+    margin-bottom: 20px;
 }
 
 .share-file-form {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding: 10px; /* 추가: 영역 내부 여백 추가 */
 }
 
 .share-file-form button {
