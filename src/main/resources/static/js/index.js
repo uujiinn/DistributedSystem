@@ -142,6 +142,11 @@ function onDelete(evt) {
     });
 }
 
+function onSync(evt){
+
+
+}
+
 function onShare(evt) {
     const sender = document.getElementById("client_name").value;
     const selectedFile = document.getElementById("selected_file").value;
@@ -173,7 +178,7 @@ window.onload = () => {
     document.getElementById("client_login_button").addEventListener("click", onConnect, false);
     document.getElementById("client_logout_button").addEventListener("click", onDisconnect, false);
     document.getElementById("share_button").addEventListener("click", onShare, false);
-    //document.getElementById("sync_button").addEventListener("click", onSync, false);
+    document.getElementById("sync_button").addEventListener("click", onSync, false);
 
     const form = document.getElementById('file-form-wrapper');
     const fileInput = document.getElementById('input_file');
