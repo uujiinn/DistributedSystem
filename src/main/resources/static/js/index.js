@@ -67,7 +67,7 @@ function onConnect(evt) {
                     "<li>" + owner + list[i] +
                     "</li>" +
                     "<button type='button' onclick='onDelete(event)' data-filename='" +
-                    list[i] +
+                    owner + list[i] +
                     "'" +
                     ">" +
                     "Delete</button>" +
@@ -129,6 +129,7 @@ function onDelete(evt) {
     const name = document.getElementById("client_name").value;
     let filename = evt.target.dataset.filename;
     console.log(name + "," + filename);
+    filename = filename.replace("[", "").replace("]", "");
     let url = '/deleteFile?host=' + name + '&filename=' + filename;
     console.log(url);
     fetch(url, {
@@ -154,7 +155,6 @@ function onShare(evt) {
     const message = `SHARE_FILE:${sender}:${selectedFile}:${selectedClient}`;
     websocket.send(message);
 }
-
 //연결 안됐을 때
 function onDisconnect() {
     if (websocket.readyState == WebSocket.CLOSED) {
@@ -173,6 +173,7 @@ window.onload = () => {
     document.getElementById("client_login_button").addEventListener("click", onConnect, false);
     document.getElementById("client_logout_button").addEventListener("click", onDisconnect, false);
     document.getElementById("share_button").addEventListener("click", onShare, false);
+    //document.getElementById("sync_button").addEventListener("click", onSync, false);
 
     const form = document.getElementById('file-form-wrapper');
     const fileInput = document.getElementById('input_file');

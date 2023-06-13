@@ -70,32 +70,36 @@ public class FileService {
         return s3Keys;
     }
 
-        public boolean deleteFiles (String remoteAddr, String host, String fileName) throws IOException {
-            String fullHost = host;
-            String fileUUID = fileUUIDMap.get(fileName);
-            if (fileUUID != null) {
-                String s3KeyForClient = "client" + "/" + fullHost + "/" + fileUUID;
-
-                // S3에서 파일 삭제
-                amazonS3.deleteObject(s3BucketName, s3KeyForClient);
-
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        socketHandler.emitFileList(remoteAddr, host, fileName, false);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-
-                String s3KeyForServer = "server" + "/" + fullHost + "/" + fileUUID;
-                amazonS3.deleteObject(s3BucketName, s3KeyForServer);
-
-                fileUUIDMap.remove(fileName);
-
-                return true;
+    public boolean deleteFiles(String remoteAddr, String host, String fileName) throws IOException {
+        String owner;
+        String fullHost = host;
+        if (fileName != null) {
+            if (fileName.contains("SERVER")) {
+                fileName = fileName.replace("SERVER", "");
+                owner = "server";
+            } else {
+                fileName = fileName.replace("CLIENT", "");
+                owner = "client";
             }
+            String s3key = owner + "/" + fullHost + "/" + fileName;
 
-            return false;
+            // S3에서 파일 삭제
+            amazonS3.deleteObject(s3BucketName, s3key);
+
+            String tmpFileName = fileName;
+            CompletableFuture.runAsync(() -> {
+                try {
+                    socketHandler.emitFileList(remoteAddr, host, tmpFileName, false);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            fileUUIDMap.remove(fileName);
+            return true;
         }
 
+        return false;
     }
+
+}

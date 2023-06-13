@@ -176,7 +176,7 @@ public class SocketHandler extends TextWebSocketHandler {
 
         String val2;
         List<String> fileList2 = new ArrayList<>();
-        for (S3ObjectSummary objectSummary : objectSummaries) {
+        for (S3ObjectSummary objectSummary : objectSummaries2) {
             val2 = objectSummary.getKey().split("/")[2];
             if (val2 != null) fileList2.add(val2);
         }
