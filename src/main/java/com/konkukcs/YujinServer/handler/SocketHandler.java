@@ -87,19 +87,17 @@ public class SocketHandler extends TextWebSocketHandler {
         String receiverFolder2 = "server" + "/" + receiver + "/" + filename;
 
         try {
-            // s3에서 파일 복사
             CopyObjectRequest copyObjectRequest = new CopyObjectRequest(s3BucketName, sourceFilePath, s3BucketName, receiverFolder);
             amazonS3.copyObject(copyObjectRequest);
             CopyObjectRequest copyObjectRequest2 = new CopyObjectRequest(s3BucketName, sourceFilePath, s3BucketName, receiverFolder2);
             amazonS3.copyObject(copyObjectRequest2);
 
-            // Send a success message to the sender
+            // sender 메시지
             sendMessageToClient(sender, filename + " shared successfully with " + receiver);
 
-            // Send a success message to the receiver
+            // receiver 메시지
             sendMessageToClient(receiver, "You received " + filename + " from " + sender);
         } catch (AmazonS3Exception e) {
-            // Handle exception if file upload fails
             e.printStackTrace();
             sendMessageToClient(sender, "Failed to share the file with " + receiver);
         }
@@ -116,7 +114,6 @@ public class SocketHandler extends TextWebSocketHandler {
             try {
                 session.sendMessage(new TextMessage(message));
             } catch (IOException e) {
-                // Handle exception if sending message fails
                 e.printStackTrace();
             }
         }
